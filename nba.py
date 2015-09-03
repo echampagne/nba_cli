@@ -21,17 +21,21 @@ def get_standings(month=TODAY.month,
 				   year=TODAY.year,
 				   league_id=League.NBA,
 				   offset=0,
-				   conference='east'):
-	game_date = '{month:02d}/{day:02d}/{year}'.format(month=month,
-													day=day,
-													year=year)
+				   conference='all'):
+	game_date = '{month:02d}/{day:02d}/{year}'.format(month=month, day=day, year=year)
 	res_json = get_json(endpoint='scoreboard', params={'LeagueID': league_id,
-													'GameDate': game_date,
-													'DayOffset': offset})
+												'GameDate': game_date,
+												'DayOffset': offset})
 	if conference.lower() == 'east':
 		print_standings(res_json['resultSets'][4]['rowSet'])
-	else:
+	elif conference.lower() == 'west':
 		print_standings(res_json['resultSets'][5]['rowSet'])
+	elif conference.lower() == 'all':
+		east_standings = res_json['resultSets'][4]['rowSet']
+		west_standings = res_json['resultSets'][5]['rowSet']
+		# Merge the two lists into one, note that this works since the lists are the same size.
+		all_standings = [item for pair in zip(east_standings, west_standings) for item in pair]
+		print_standings(all_standings)
 
 def print_standings(standings):
 	# Sort by win percentage to display
@@ -67,7 +71,7 @@ def main(standings, conference):
 	'''
 	if standings and conference:
 		get_standings(conference=conference)
-		return;
+		return
 	if standings:
 		get_standings()
 		return
