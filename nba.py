@@ -72,22 +72,25 @@ def print_games(games):
 	# Construct a list of games from the JSON.
 	for game, i in zip(games, xrange(0,len(games),2)):
 		games_list.append({
-							'away': games[i],
-							'home': games[i+1]
-						   })
-
-	# print json.dumps(games_list, indent=2)
+						   'away': games[i],
+						   'home': games[i+1]
+						  })
+		
 	for game in games_list:
 		# Print team names in the game.
-		click.secho("{away_abv:3} at {home_abv:3}".format(
-				away_abv=str(game['away'][4]), home_abv=str(game['home'][4])
+		click.secho("{away_abv:3} ({away_record}) at {home_abv:3} ({home_record})".format(
+				away_abv=str(game['away'][4]), home_abv=str(game['home'][4]),
+				away_record="".join(str(game['away'][6])), home_record="".join(str(game['home'][6]))
 			), bold=True)
-
 		# Calculate the number of overtimes in game
 		num_ots = 0;
 		for ot in xrange(11,21):
-			if game['home'][ot] != 0
+			if game['home'][ot] != 0:
 				num_ots += 1
+		print str(game)
+
+
+
 
 
 

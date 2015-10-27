@@ -1,5 +1,4 @@
 #!/usr/bin/env
-
 from setuptools import setup
 
 setup(
