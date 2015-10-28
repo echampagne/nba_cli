@@ -11,6 +11,8 @@ from constants import League
 TODAY = datetime.today()
 CURRENT_SEASON = '2015-16'
 BASE_URL = 'http://stats.nba.com/stats/{endpoint}/'
+LIVE_URL = "http://data.nba.com/data/v2014/json/ \
+            mobile_teams/nba/2014/scores/00_todays_scores.json"
 
 def get_json(endpoint, params):
     '''
@@ -106,11 +108,13 @@ def get_games(
 
     print_games(res_json['resultSets'][1]['rowSet'],
                 res_json['resultSets'][0]['rowSet'])
+    
 
 def print_games(games, game_data):
     '''
         This method formats and displays a list of games.
     '''
+
     games_list = []
     # Construct a list of games from the JSON.
     for game, i in zip(games, xrange(0, len(games), 2)):
@@ -120,7 +124,6 @@ def print_games(games, game_data):
         games_list[i]['data'] = game
 
     for game in games_list:
-
         # Print team names in the game.
         click.secho(
             "{away_abv:3} ({away_record}) at {home_abv:3} ({home_record})"
@@ -130,23 +133,27 @@ def print_games(games, game_data):
                     home_record="".join(str(game['home'][6]))),
             bold=True)
 
-        # Status of 1 indicates it hasn't started. So do not print score.
+        # Status of 1 indicates it hasn't started. So do not print the score.
         if game['data'][3] == 1:
             start_time = game['data'][4]
-            tv = game['data'][11]
-            header_str = " "*3 + "Starts at {time:8}".format(time=str(start_time))
-            if tv is not None:
-                header_str += " on {tv:12}".format(tv=str(tv))
-            click.secho(header_str, fg="blue")
+            tv_station = game['data'][11]
+            header_str = " "*5+"Starts at {time:8}".format(time=str(start_time))
+            if tv_station is not None:
+                header_str += " on {tv:12}".format(tv=str(tv_station))
+            click.secho(header_str, bold=True, fg="blue")
 
+        # Otherwise the game is in progress or over.
+        else:
+            # Status of 2 indicates the game is in progress.
+            # Print the header for it.
+            if game['data'][3] == 2:
+                live_period = game['data'][9]
+                live_time_left = game['data'][10]
+                header_str = "{time:4}remaining in quarter {qtr:2}".format(time=str(live_time_left),
+                                                                           qtr=str(live_period))
 
-        # Status of 2 indicates the game is in progress.
-        if game['data'][3] == 2:
-            click.secho("Game is in progress...")
+                click.secho(header_str, bold=True, fg="blue")
 
-
-        # Status of 3 indicates the game is over.
-        if game['data'][3] == 3:
             # Count number of OTs in game and construct period header string
             num_ots = 0
             for i in xrange(11, 21):
@@ -155,23 +162,29 @@ def print_games(games, game_data):
             period_header = " "*5 + "Q1  Q2  Q3  Q4"
             for i in xrange(1, num_ots+1, 1):
                 period_header += "  OT"+ str(i)
-            period_header += "  Final"
 
             # Construct score string's
-            away_score_str = " {away_abv:4}".format(away_abv=str(game['away'][4]))
-            home_score_str = " {home_abv:4}".format(home_abv=str(game['home'][4]))
+            away_score_str = "{away_abv:5}".format(away_abv=str(game['away'][4]))
+            home_score_str = "{home_abv:5}".format(home_abv=str(game['home'][4]))
             away_final_score = 0
             home_final_score = 0
-            for i in xrange(7, 11+num_ots,1):
+            for i in xrange(7, 11+num_ots, 1):
                 away_score_str += "{score:4}".format(score=str(game['away'][i]))
                 home_score_str += "{score:4}".format(score=str(game['home'][i]))
                 away_final_score += game['away'][i]
                 home_final_score += game['home'][i]
-            away_score_str += "{final_score:4}".format(final_score=str(away_final_score))
-            home_score_str += "{final_score:4}".format(final_score=str(home_final_score))
+
+            # Status of 3 indicates the game is over.
+            if game['data'][3] == 3:
+                # Add final scores to strings.
+                period_header += "  Final"
+                away_score_str += "{final_score:4}".format(final_score=str(away_final_score))
+                home_score_str += "{final_score:4}".format(final_score=str(home_final_score))
 
             click.secho(period_header, bold=True, fg="blue")
             click.secho(away_score_str + "\n" + home_score_str)
+
+
 
 # Set up command line arguments
 @click.command()
